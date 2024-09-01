@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { Request } = require('../models');
+const { checkProcessingStatus } = require('../controller/status.controller');
 
-router.get('/:requestId', async (req, res) => {
-    // Retrieve status and output URL
-});
+router.get('/:requestId', checkProcessingStatus);
 
 module.exports = router;

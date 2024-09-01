@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var uploadRouter = require('./routes/upload');
+var statusRouter = require('./routes/status');
 
 const db = require("./db/models/index");
 
@@ -16,7 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/upload', uploadRouter);
-// app.use('/status', statusRouter);
+app.use('/status', statusRouter);
 // app.use('/webhook', webhookRouter);
 
 
