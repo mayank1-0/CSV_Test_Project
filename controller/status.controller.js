@@ -14,7 +14,6 @@ const checkProcessingStatus = async (req, res) => {
             return res.status(500).send('Invalid request id');
         }
         const fileId = result.file_id;
-        console.log(`0000 ${fileId}`);
 
         // Find the request by ID
         const request = await FileProcessing.findOne({
@@ -26,8 +25,6 @@ const checkProcessingStatus = async (req, res) => {
         if (!request) {
             return res.status(404).json({ message: 'File id associated with request id not found' });
         }
-
-        console.log(`11111 ${fileId}`);
 
         // Retrieve request status and optionally output CSV URL
         const response = {
