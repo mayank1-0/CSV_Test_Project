@@ -2,6 +2,6 @@ module.exports = {
   host: "localhost",
   username: "root",
   password: "root",
-  database: "spynetest",
+  database: "csv_test_project",
   dialect: "mysql",
 };
