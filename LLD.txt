@@ -1,0 +1,124 @@
+Low-Level Design
+
+SYSTEM OVERVIEW
+1. CSV Upload and Validation:
+    -> Receive and validate the CSV file.
+    -> Ensure the format is correct.
+    -> Generate a unique request ID for tracking.
+
+2. Asynchronous Image Processing:
+    -> Process images asynchronously (e.g., compress images by 50%).
+    -> Store processed images and update database records.
+
+3. Status Tracking:
+    -> Provide endpoints to check the status of image processing.
+
+4. Webhook Handling (Bonus):
+    -> Trigger a webhook when processing is complete.
+
+COMPONENTS
+1. API Endpoints:
+    -> Upload API: For CSV file submission and request ID generation.
+    -> Status API: For checking the processing status.
+
+2. Image Processing Service:
+    -> Compresses images asynchronously.
+
+3. Database:
+    -> Stores product information, image URLs, and processing status.
+
+4. Webhook Handling:
+    -> Sends notifications when processing is completed.
+
+DETAILED DESIGN
+1. API Endpoints:
+
+Upload API
+    -> Endpoint: POST /upload
+Request:
+    -> file: CSV file
+Response:
+    -> request_id: Unique ID for tracking
+
+Status API
+    -> Endpoint: GET /status/{request_id}
+Response:
+    -> status: Processing status (e.g., "Processing", "Completed", "Failed")
+    -> result_url: URL of the output CSV if processing is completed
+2. Image Processing Service
+    -> Function: Compress images by 50% of their original quality.
+    -> Implementation:
+        -> Use an asynchronous worker (e.g., Celery with Redis/RabbitMQ) for image processing.
+        -> Utilize libraries like Pillow for image compression.
+3. Database Schema
+    -> Tables:
+        1.FileProcessing
+            requestID: UUID
+            processingStatus: Enum (e.g., "Pending", "Processing", "Failed")
+            file_id: Integer
+            created_at: Timestamp
+            updated_at: Timestamp
+        2.Products
+            id: Auto-increment Primary Key
+            serialNumber: Integer
+            productName: String
+            inputImageUrls: String
+            outputImageUrls: String (nullable)
+            file_id: Integer
+            created_at: Timestamp
+            updated_at: Timestamp
+4. Webhook Handling
+    -> Endpoint: POST /webhook
+    -> Request:
+        -> request_id: Unique ID
+        -> status: Processing status
+        -> result_url: URL of the output CSV (if applicable)
+
+VISUAL DIAGRAM
+
+1. Client:
+    Upload CSV -> Upload API -> Processing Queue
+
+2. Processing Queue:
+    Asynchronous Worker -> Image Processing Service -> Database -> Status Update
+
+3. Webhook:
+    Image Processing Service -> Webhook Endpoint
+
+API DOCUMENTATION
+
+Upload API Documentation
+    -> Description: Receives a CSV file, validates it, and starts processing.
+    -> Parameters: file
+    -> Responses:
+        -> 200 OK: Returns request_id.
+        -> 400 Bad Request: Validation errors.
+
+Status API Documentation
+    -> Description: Retrieves the status of a processing request.
+    -> Parameters: request_id
+    -> Responses:
+        -> 200 OK: Returns processing status and result URL.
+        -> 404 Not Found: Request ID not found.
+
+ASYNCHRONUS WORKERS DOCUMENTATION
+
+Image Processor Worker
+    -> Function: Downloads images, compresses them, uploads them, and updates the database.
+    -> Library: Pillow for image processing.
+    -> Queue: Celery with Redis or RabbitMQ.
+
+GITHUB REPOSITORY
+
+Create a GitHub repository containing:
+Code for the APIs.
+    -> Asynchronous workers.
+    -> Database migration scripts.
+    -> Configuration files.
+    -> README for setup instructions.
+
+POSTMAN COLLECTION
+
+    -> Purpose: To test the APIs.
+    -> Content: Example requests and responses for the Upload and Status APIs.
+    -> Link: Publicly accessible for testing purposes.
