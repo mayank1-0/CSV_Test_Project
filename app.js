@@ -26,7 +26,7 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
-db.sequelize.sync();
+db.sequelize.sync({force: true});
 
 // error handler
 app.use(function (err, req, res, next) {
