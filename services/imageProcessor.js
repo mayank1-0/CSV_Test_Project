@@ -1,20 +1,39 @@
+const axios = require('axios');
 const sharp = require('sharp');
-const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * Fetches an image from a URL and compresses it.
+ * @param {string} imageUrl - URL of the image to be processed.
+ * @param {string} outputDir - Directory to save the processed image.
+ * @returns {Promise<string>} - URL of the processed image.
+ */
 const processImage = async (imageUrl, outputDir) => {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error('Failed to fetch image');
+    try {
+        // Generate a unique filename
+        const filename = path.basename(imageUrl);
+        const outputFilePath = path.join(outputDir, filename);
 
-    const buffer = await response.buffer();
-    const outputFilePath = path.join(outputDir, path.basename(imageUrl));
+        // Fetch the image
+        const response = await axios({
+            url: imageUrl,
+            responseType: 'arraybuffer',
+        });
 
-    await sharp(buffer)
-        .jpeg({ quality: 50 })
-        .toFile(outputFilePath);
+        // Compress the image
+        await sharp(response.data)
+            .resize({ width: 800 }) // Example: Resize to a width of 800px (maintaining aspect ratio)
+            .jpeg({ quality: 50 }) // Compress to 50% quality
+            .toFile(outputFilePath);
 
-    return outputFilePath;
+        // Generate a URL for the processed image
+        const processedImageUrl = `https://your-domain.com/processed-images/${filename}`;
+        return processedImageUrl;
+    } catch (error) {
+        console.error(`Error processing image ${imageUrl}:`, error);
+        throw error;
+    }
 };
 
 module.exports = { processImage };
