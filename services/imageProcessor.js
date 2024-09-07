@@ -14,19 +14,16 @@ const processImage = async (imageUrl, outputDir) => {
         // Generate a unique filename
         const filename = path.basename(imageUrl);
         const outputFilePath = path.join(outputDir, filename);
-
         // Fetch the image
         const response = await axios({
             url: imageUrl,
             responseType: 'arraybuffer',
         });
-
         // Compress the image
         await sharp(response.data)
             .resize({ width: 800 }) // Example: Resize to a width of 800px (maintaining aspect ratio)
             .jpeg({ quality: 50 }) // Compress to 50% quality
             .toFile(outputFilePath);
-
         // Generate a URL for the processed image
         const processedImageUrl = `https://your-domain.com/processed-images/${filename}`;
         return processedImageUrl;

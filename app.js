@@ -1,8 +1,11 @@
 var createError = require('http-errors');
 var express = require('express');
-var path = require('path');
+const cors = require('cors');
+const path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./swagger');
 
 var uploadRouter = require('./routes/upload');
 var statusRouter = require('./routes/status');
@@ -11,10 +14,14 @@ const db = require("./db/models/index");
 
 var app = express();
 
+app.use(cors());
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 app.use('/upload', uploadRouter);
 app.use('/status', statusRouter);
@@ -26,7 +33,7 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
-db.sequelize.sync({force: true});
+db.sequelize.sync({ force: true });
 
 // error handler
 app.use(function (err, req, res, next) {

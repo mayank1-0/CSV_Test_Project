@@ -9,9 +9,25 @@ const Products = db.Products;
  */
 const storeProductData = async (productDataArray, fileId) => {
     try {
-        const promises = productDataArray.map(productData => {
+        const promises = productDataArray.map(async (productData) => {
             productData.file_id = fileId; // Attach the fileId to each record
-            return Products.create(productData);
+            const result = await Products.findOne({
+                where: {
+                    productName: productData.productName
+                }
+            })
+            if (!result) {
+                return Products.create(productData);
+            }
+            else {
+                return Products.update({
+                    outputImageUrls: productData.outputImageUrls
+                }, {
+                    where: {
+                        productName: productData.productName
+                    }
+                });
+            }
         });
 
         await Promise.all(promises);

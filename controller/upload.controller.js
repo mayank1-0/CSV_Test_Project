@@ -1,9 +1,11 @@
 const csvParser = require('csv-parser');
 const fs = require('fs');
+const path = require('path');
 const db = require('../db/models/index');
 const Products = db.Products;
 const FileProcessing = db.FileProcessing;
 const { parseCSV } = require('../utils/csvUtils');
+const { processImage } = require('../services/imageProcessor');
 const { storeProductData } = require('../services/productService');
 const { sendWebhookNotification } = require('../services/webhookService');
 
@@ -130,40 +132,38 @@ const uploadProductCSV = async (req, res) => {
         const productDataArray = await parseCSV(req.file.path);         // Parses a CSV file and returns the data as an array of objects.
 
         await storeProductData(productDataArray, fileId);           // Stores parsed product data in the database.
-
         // Process each image
-        const outputDir = path.join(__dirname, 'processedImages');
+        const outputDir = path.join(__dirname, '../processedImages');
         if (!fs.existsSync(outputDir)) {
             fs.mkdirSync(outputDir, { recursive: true });
         }
-
         const updatedProductDataArray = await Promise.all(
             productDataArray.map(async (productData) => {
+                let outputUrl = [];
                 const inputImageUrls = productData.inputImageUrls.split(',');
                 const outputImageUrls = await Promise.all(
-                    inputImageUrls.map(async (imageUrl) => await processImage(imageUrl, outputDir))
+                    inputImageUrls.map(async (imageUrl) => {
+                        outputUrlValue = await processImage(imageUrl, outputDir)
+                        outputUrl.push(outputUrlValue);
+                    })
                 );
-                console.log(`111111111 ${outputImageUrls.join(',')}`);
                 return {
                     ...productData,
-                    outputImageUrls: outputImageUrls.join(',')
+                    outputImageUrls: outputUrl.join(',')
                 };
             })
         );
 
         // Store the processed data into the database
         await storeProductData(updatedProductDataArray, fileId);
-
         const webhookUrl = 'https://your-webhook-url.com/notify';
         const webhookData = {
             requestID,
             processingStatus: 'Completed',
             processedImageUrls: updatedProductDataArray.map(product => product.outputImageUrls)
         };
-
         // Send webhook notification
         await sendWebhookNotification(webhookUrl, webhookData);
-
         if (!responseSent) {
             res.send({
                 status: 200,
@@ -172,9 +172,7 @@ const uploadProductCSV = async (req, res) => {
             });
             responseSent = true;
         }
-
         fs.unlinkSync(req.file.path);
-
     } catch (error) {
         console.error('Error handling CSV file upload:', error);
         if (!responseSent) {
